@@ -3,24 +3,42 @@
 import DemoContainer from "@/components/DemoContainer";
 import { MainForm } from "@/components/MainBody";
 import Navbar from "@/components/Navbar";
-import React, { createContext, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 
+type ActiveTabType = {
+  tab: string;
+  setTab: (tab: string) => void;
+};
 
-export const ActiveTabContext = createContext({tab: localStorage.getItem('activaTab') || 'buy', setTab: (tab: string) => {}})
+// 1. Default safe value for SSR (localStorage lama isticmaalin halkan)
+export const ActiveTabContext = createContext<ActiveTabType>({
+  tab: 'buy',
+  setTab: () => {},
+});
 
 function BodyWrapper() {
-    const [activeTab, setActiveTab] = useState(() => {
-        return localStorage.getItem('activeTab') || 'buy';
-    })
+  const [activeTab, setActiveTab] = useState('buy');
 
-      return (
-        <ActiveTabContext.Provider value={ {tab: activeTab, setTab: setActiveTab} }>
-        <Navbar />
-        <DemoContainer>
-            <MainForm />
-        </DemoContainer>
-        </ActiveTabContext.Provider>
-      )
+  // 2. Isticmaal localStorage marka browser diyaar yahay
+  useEffect(() => {
+    const savedTab = localStorage.getItem('activeTab');
+    if (savedTab) {
+      setActiveTab(savedTab);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab);
+  }, [activeTab]);
+
+  return (
+    <ActiveTabContext.Provider value={{ tab: activeTab, setTab: setActiveTab }}>
+      <Navbar />
+      <DemoContainer>
+        <MainForm />
+      </DemoContainer>
+    </ActiveTabContext.Provider>
+  );
 }
 
-export default BodyWrapper
+export default BodyWrapper;
